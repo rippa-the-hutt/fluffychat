@@ -506,8 +506,17 @@ class ChatController extends State<ChatPageWithRoom>
     if (animateInEventId == eventId) animateInEventId = null;
   }
 
+  DateTime? _lastUpdateViewCall;
+  static const Duration _updateViewThrottle = Duration(milliseconds: 200);
+
   void updateView() {
     if (!mounted) return;
+    final now = DateTime.now();
+    if (_lastUpdateViewCall != null &&
+        now.difference(_lastUpdateViewCall!) < _updateViewThrottle) {
+      return;
+    }
+    _lastUpdateViewCall = now;
     setReadMarker();
     setState(() {});
   }
@@ -591,6 +600,7 @@ class ChatController extends State<ChatPageWithRoom>
   void dispose() {
     timeline?.cancelSubscriptions();
     timeline = null;
+    WidgetsBinding.instance.removeObserver(this);
     _storeInputTimeoutTimer?.cancel();
     typingCoolDown?.cancel();
     typingTimeout?.cancel();
